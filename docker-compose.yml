@@ -1,14 +1,89 @@
 services:
-  stats-server:
+  eureka:
+    image: infra/discovery-server
+    build:
+      context: ./infra/discovery-server
     ports:
-      - "9090:9090"
+      - "8761:8761"
+    environment:
+      - SERVER_PORT=8761
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8761/actuator/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 30
 
-  stats-db:
+  postgres:
     image: postgres:16.1
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpass
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d postgres" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
-  ewm-service:
+  config-server:
+    image: infra/config-server
+    build:
+      context: ./infra/config-server
+    environment:
+      - SERVER_PORT=8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+    depends_on:
+      eureka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+
+  gateway-server:
+    image: infra/gateway-server
+    build:
+      context: ./infra/gateway-server
     ports:
       - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
 
-  ewm-db:
-    image: postgres:16.1
+  stats-server:
+    image: stats/stats-server
+    build:
+      context: ./stats/stats-server
+    environment:
+      - POSTGRES_URL=//postgres:5432/stat
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  main-service:
+    image: core/main-service
+    build:
+      context: ./core/main-service
+    environment:
+      - POSTGRES_URL=//postgres:5432/main
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg_data:
