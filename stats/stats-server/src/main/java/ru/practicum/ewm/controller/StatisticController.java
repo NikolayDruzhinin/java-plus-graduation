@@ -23,7 +23,7 @@ public class StatisticController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createEndpointHit(@Validated @RequestBody EndpointHitInputDto endpointHitInputDto) {
+    public void addHit(@Validated @RequestBody EndpointHitInputDto endpointHitInputDto) {
         log.info("Поступил запрос Post /hit на создание EndpointHit с телом: {}", endpointHitInputDto);
         statisticServiceImpl.createEndpointHit(endpointHitInputDto);
         log.info("Обработан запрос Post /hit на создание EndpointHit с телом: {}", endpointHitInputDto);

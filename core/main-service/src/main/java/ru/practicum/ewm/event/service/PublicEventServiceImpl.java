@@ -1,28 +1,31 @@
 package ru.practicum.ewm.event.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.EndpointHitInputDto;
 import ru.practicum.ewm.StatsClient;
 import ru.practicum.ewm.ViewStatsOutputDto;
-import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.EventSort;
 import ru.practicum.ewm.event.dto.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventState;
+import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.NotFoundException;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -129,23 +132,17 @@ public class PublicEventServiceImpl implements PublicEventService {
 
     private Map<Long, Long> getEventsViews(List<String> uris) {
         try {
-            ResponseEntity<Object> response = statsClient.getStats(
+            List<ViewStatsOutputDto> response = statsClient.getStats(
                     LocalDateTime.now().minusYears(1),
                     LocalDateTime.now().plusHours(1),
                     uris,
                     true);
 
-            if (response.getStatusCode().is2xxSuccessful()) {
-                List<ViewStatsOutputDto> stats = objectMapper.convertValue(
-                        response.getBody(),
-                        new TypeReference<>() {});
-
-                return stats.stream()
-                        .collect(Collectors.toMap(
-                                stat -> Long.parseLong(stat.getUri().substring(EVENTS_URI_PREFIX.length())),
-                                ViewStatsOutputDto::getHits
-                        ));
-            }
+            return response.stream()
+                    .collect(Collectors.toMap(
+                            stat -> Long.parseLong(stat.getUri().substring(EVENTS_URI_PREFIX.length())),
+                            ViewStatsOutputDto::getHits
+                    ));
         } catch (Exception e) {
             log.error("Failed to get views stats", e);
         }
