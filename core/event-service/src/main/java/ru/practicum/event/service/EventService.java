@@ -36,13 +36,13 @@ public class EventService {
     private static final long HOURS_BEFORE_EVENT = 2;
 
     public List<EventShortDto> getAllEventsOfUser(Long userId, int from, int size) {
-        getUserOrThrow(userId);
+        User u = getUserOrThrow(userId);
         int page = from / size;
         PageRequest pageRequest = PageRequest.of(page, size);
 
         return eventRepository.findAllByInitiatorId(userId, pageRequest)
                 .stream()
-                .map(eventMapper::toEventShortDto)
+                .map(e -> eventMapper.toEventShortDto(e, u))
                 .collect(Collectors.toList());
     }
 
@@ -54,23 +54,23 @@ public class EventService {
         checkEventDate(dto.getEventDate());
         Event event = EventMapper.toEvent(dto, initiator, category);
         Event saved = eventRepository.save(event);
-        return eventMapper.toEventFullDto(saved);
+        return eventMapper.toEventFullDto(saved, initiator);
     }
 
     public EventFullDto getEventOfUser(Long userId, Long eventId) {
-        getUserOrThrow(userId);
+        User u = getUserOrThrow(userId);
         Event event = getEventOrThrow(eventId);
 
         if (!event.getInitiatorId().equals(userId)) {
             throw new NotFoundException("Событие не принадлежит пользователю id=" + userId);
         }
 
-        return eventMapper.toEventFullDto(event);
+        return eventMapper.toEventFullDto(event, u);
     }
 
     @Transactional
     public EventFullDto updateEventOfUser(Long userId, Long eventId, UpdateEventUserRequest dto) {
-        getUserOrThrow(userId);
+        User u = getUserOrThrow(userId);
         Event event = getEventOrThrow(eventId);
 
         if (!event.getInitiatorId().equals(userId)) {
@@ -97,7 +97,7 @@ public class EventService {
         EventMapper.updateEventFromUserRequest(event, dto, category);
         Event updated = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(updated);
+        return eventMapper.toEventFullDto(updated, u);
     }
 
     private void updateState(Event event, EventStateAction stateAction) {

@@ -1,6 +1,5 @@
 package ru.practicum.event.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.EventSort;
@@ -20,6 +20,7 @@ import ru.practicum.ewm.StatsClient;
 import ru.practicum.ewm.ViewStatsOutputDto;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -35,7 +36,7 @@ public class PublicEventServiceImpl implements PublicEventService {
     private final EventRepository eventRepository;
     private final StatsClient statsClient;
     private final EventMapper eventMapper;
-    private final ObjectMapper objectMapper;
+    private final UserClient userClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -50,7 +51,9 @@ public class PublicEventServiceImpl implements PublicEventService {
         addHit(request);
         updateEventViews(event);
 
-        EventFullDto eventFullDto = eventMapper.toEventFullDto(event);
+        User u = getUserOrThrow(event.getInitiatorId());
+
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(event, u);
         log.info("Получен eventFullDto с ID = {}", eventFullDto.getId());
         return eventFullDto;
     }
@@ -123,13 +126,19 @@ public class PublicEventServiceImpl implements PublicEventService {
                 .map(event -> {
                     Long views = viewsByEventId.getOrDefault(event.getId(), event.getViews() != null ? event.getViews() : 0L);
                     event.setViews(views);
-                    return eventMapper.toEventShortDto(event);
+                    User u = getUserOrThrow(event.getInitiatorId());
+                    return eventMapper.toEventShortDto(event, u);
                 })
                 .collect(Collectors.toList());
 
         updateEventsViewsInBatch(events, viewsByEventId);
 
         return dtos;
+    }
+
+    private User getUserOrThrow(Long userId) {
+        return userClient.getUserById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
     }
 
     private Map<Long, Long> getViewsForEvents(List<Event> events) {

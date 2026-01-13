@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.compilation.model.Compilation;
 import ru.practicum.compilation.service.AdminCompilationService;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
@@ -35,7 +36,8 @@ public class AdminCompilationController {
     public CompilationDto updateCompilation(@Validated(UpdateGroup.class) @RequestBody UpdateCompilationRequest updateCompilationRequest,
                                             @PathVariable Long id) {
         log.info("Поступил запрос Patch /admin/compilations/{} на обновление Compilation с телом {}", id, updateCompilationRequest);
-        CompilationDto response = adminCompilationService.updateCompilation(updateCompilationRequest, id);
+        Compilation updatedCompilation = adminCompilationService.updateCompilation(updateCompilationRequest, id);
+        CompilationDto response = adminCompilationService.loadUsersForEvents(updatedCompilation);
         log.info("Сформирован ответ Patch /admin/compilations/{} с телом: {}", id, response);
         return response;
     }

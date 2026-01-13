@@ -38,14 +38,12 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
         compilation.setEvents(events);
 
         Compilation savedCompilation = compilationRepository.save(compilation);
-        Map<Long, User> users = loadUsersForEvents(savedCompilation.getEvents());
-
-        return compilationMapper.toCompilationDto(savedCompilation, users);
+        return loadUsersForEvents(savedCompilation);
     }
 
     @Override
     @Transactional
-    public CompilationDto updateCompilation(UpdateCompilationRequest updateCompilationRequest, Long id) {
+    public Compilation updateCompilation(UpdateCompilationRequest updateCompilationRequest, Long id) {
         Compilation compilation = checkExistCompilationById(id);
 
         if (updateCompilationRequest.getTitle() != null && !updateCompilationRequest.getTitle().isBlank()) {
@@ -60,9 +58,7 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
         }
 
         Compilation updatedCompilation = compilationRepository.save(compilation);
-        Map<Long, User> users = loadUsersForEvents(updatedCompilation.getEvents());
-
-        return compilationMapper.toCompilationDto(updatedCompilation, users);
+        return updatedCompilation;
     }
 
     @Override
@@ -77,11 +73,13 @@ public class AdminCompilationServiceImpl implements AdminCompilationService {
                 .orElseThrow(() -> new NotFoundException("Подборки событий с id = " + id + " не существует"));
     }
 
-    private Map<Long, User> loadUsersForEvents(Set<Event> events) {
-        List<Long> userIds = events.stream()
+    @Override
+    public CompilationDto loadUsersForEvents(Compilation compilation) {
+        List<Long> userIds = compilation.getEvents().stream()
                 .map(Event::getInitiatorId)
                 .collect(Collectors.toList());
-        return userServiceClient.getUsersWithIds(userIds).stream()
+        Map<Long, User> users = userServiceClient.getUsersWithIds(userIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
+        return compilationMapper.toCompilationDto(compilation, users);
     }
 }

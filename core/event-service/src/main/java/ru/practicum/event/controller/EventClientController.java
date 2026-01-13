@@ -31,7 +31,7 @@ public class EventClientController implements EventClient {
     @Override
     public Event save(Event event) throws FeignException {
         log.info("Поступил запрос Post /admin/events на сохранение Event с телом = {}", event);
-        Event response = adminEventService.saveEventFull(event);
+        Event response = adminEventService.saveEvent(event);
         log.info("Сформирован ответ Post /admin/events с телом: {}", response);
         return response;
     }

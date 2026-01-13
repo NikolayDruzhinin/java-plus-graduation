@@ -17,5 +17,5 @@ public interface AdminEventService {
 
     EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest updateEventAdminRequest);
 
-    Event saveEventFull(Event event);
+    Event saveEvent(Event event);
 }
