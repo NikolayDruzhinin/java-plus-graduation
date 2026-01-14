@@ -46,7 +46,10 @@ public class AdminEventServiceImpl implements AdminEventService {
         Pageable pageable = PageRequest.of(from.intValue(), size.intValue());
         Page<Event> events = eventRepository.findByParams(userIds, states, categoryIds, rangeStart, rangeEnd, pageable);
 
-        Map<Long, User> users = userServiceClient.getUsersWithIds(userIds).stream().collect(Collectors.toMap(User::getId, user -> user));
+        List<Long> eventUsersIds = events.stream().map(Event::getInitiatorId).toList();
+        Map<Long, User> users = userServiceClient.getUsersWithIds(eventUsersIds)
+                .stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
         return eventMapper.toEventFullDto(events.toList(), users);
     }
 
