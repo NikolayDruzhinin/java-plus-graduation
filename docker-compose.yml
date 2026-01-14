@@ -1,14 +1,21 @@
 services:
-  stats-server:
-    ports:
-      - "9090:9090"
-
-  stats-db:
+  postgres:
     image: postgres:16.1
-
-  ewm-service:
+    container_name: postgres
     ports:
-      - "8080:8080"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpass
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
-  ewm-db:
-    image: postgres:16.1
+volumes:
+  pg_data:
