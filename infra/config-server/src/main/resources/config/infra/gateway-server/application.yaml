@@ -1,21 +1,46 @@
-server:
-    port: 8080
-
 spring:
-    cloud:
-        gateway:
-            discovery.locator.enabled: true
-            routes:
-                -   id: user_service
-                    uri: lb://user-service
-                    predicates:
-                        - Path=/admin/users/**
-                -   id: request_service_route
-                    uri: lb://request-service
-                    predicates:
-                        - Path=/users/*/requests/**
-                -   id: event-service
-                    uri: lb://event-service
-                    predicates:
-                        - Path=/admin/events/**, /users/*/events/**, /users/*/events/*/requests/**, /events/**, /categories/**, /admin/categories/**, /admin/compilations/**, /compilations/**, /users/*/events/*/comments/**, /events/*/comments/**
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      retry:
+        enabled: true
+    gateway:
+      error:
+        include-message: never
+        include-body: never
+      actuator.verbose.enabled: false
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: request_service_route
+          uri: lb://REQUEST-SERVICE
+          predicates:
+            - Path=/users/{userId}/requests/**,/users/{userId}/events/{eventId}/requests/**
+        - id: event_service_route
+          uri: lb://EVENT-SERVICE
+          predicates:
+            - Path=/admin/events/**,/events/**,/users/{userId}/events/**,/admin/compilations/**,/compilations/**
+        - id: comment_service_route
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/admin/comments/**,/users/{userId}/comments/**
+        - id: user_service_route
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/admin/users/**
+        - id: category_service_route
+          uri: lb://CATEGORY-SERVICE
+          predicates:
+            - Path=/admin/categories/**,/categories/**
 
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true

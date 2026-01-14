@@ -1,26 +1,20 @@
-server:
-    port: 0
-
+server.port: 8888
 spring:
-    application:
-        name: config-server
-    profiles:
-        active: native
-    cloud:
-        config:
-            server:
-                native:
-                    searchLocations:
-                        - classpath:config/core/{application}
-                        - classpath:config/infra/{application}
-                        - classpath:config/stats/{application}
-
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          searchLocations:
+            - classpath:config/core/{application}
+            - classpath:config/stats/{application}
+            - classpath:config/infra/{application}
 eureka:
-    client:
-        serviceUrl:
-            defaultZone: http://localhost:8761/eureka/
-    instance:
-        preferIpAddress: true
-        hostname: localhost
-        instance-id: "${spring.application.name}:${random.value}"
-        leaseRenewalIntervalInSeconds: 10
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

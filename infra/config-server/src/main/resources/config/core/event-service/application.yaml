@@ -1,35 +1,61 @@
 server:
-    port: 0
-
+  port: 0
+stats-server:
+  url: "http://stats-server"
 spring:
-    jpa:
-        hibernate:
-            ddl-auto: none
-        properties:
-            hibernate:
-                format_sql: true
-    sql:
-        init:
-            mode: always
-    datasource:
-        driverClassName: org.postgresql.Driver
-        url: jdbc:postgresql://localhost:6434/eventdb
-        username: postgres
-        password: 12345
-    cloud:
-        openfeign:
-            enabled: true
-            okhttp:
-                enabled: true
-
-discovery:
-    services:
-        stats-server-id: stat-server
-
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.time_zone: UTC
+    database: POSTGRESQL
+    #database: H2
+    show-sql: true
+  sql:
+    init:
+      mode: always
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+  main:
+    banner-mode: off
+    log-startup-info: false
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://main-db:5432/explore-main
+    #driverClassName: org.h2.Driver
+    #url: jdbc:h2:file:./db/event
+    username: explore-main
+    password: explore-main
 logging:
-    level:
-        org.springframework.orm.jpa: INFO
-        org.springframework.transaction: INFO
-        org.springframework.transaction.interceptor: INFO
-        org.springframework.orm.jpa.JpaTransactionManager: DEBUG
-        org.hibernate.SQL: DEBUG
+  level:
+    org:
+      zalando.logbook: TRACE
+      springframework:
+        orm:
+          jpa: INFO
+        transaction: INFO
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+grpc:
+  client:
+    analyzer:
+      address: 'discovery:///analyzer'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+      enableRetry: true
+      retryAttempts: 15
+      retryDelay: 3000
+    collector:
+      address: 'discovery:///collector'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+      enableRetry: true
+      retryAttempts: 15
+      retryDelay: 3000

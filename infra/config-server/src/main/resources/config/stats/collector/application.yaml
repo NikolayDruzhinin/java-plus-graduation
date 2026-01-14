@@ -1,0 +1,5 @@
+kafka.constants:
+  url: "localhost:9092"
+  topic: "stats.user-actions.v1"
+grpc.server.port: 0
+#server.port: 0

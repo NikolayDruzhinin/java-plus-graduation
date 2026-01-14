@@ -1,0 +1,28 @@
+grpc.server.port: 0
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.time_zone: UTC
+  sql:
+    init:
+      mode: always
+  main:
+    banner-mode: off
+    log-startup-info: false
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6432/explore-stats
+    #driverClassName: org.h2.Driver
+    #url: jdbc:h2:file:./db/stats
+    username: explore-stats
+    password: explore-stats
+
+kafka.constants:
+  url: "localhost:9092"
+  action: "stats.user-actions.v1"
+  similarity: "stats.events-similarity.v1"

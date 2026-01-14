@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -13,16 +13,16 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>interaction-api</module>
+        <module>common-api</module>
+        <module>event-service</module>
+        <module>event-api</module>
+        <module>user-api</module>
+        <module>request-api</module>
         <module>user-service</module>
         <module>request-service</module>
-        <module>event-service</module>
+        <module>category-api</module>
+        <module>category-service</module>
+        <module>comment-service</module>
+        <module>comment-api</module>
     </modules>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
 </project>
