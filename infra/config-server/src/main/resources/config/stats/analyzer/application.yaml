@@ -1,28 +1,57 @@
-grpc.server.port: 0
+server:
+  port: 0
+grpc:
+  server:
+    port: 0
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc.time_zone: UTC
   sql:
     init:
       mode: always
-  main:
-    banner-mode: off
-    log-startup-info: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Europe/Moscow
+        show_sql: true
+    properties.hibernate.type.descriptor.sql: TRACE
+  jackson:
+    time-zone: Europe/Moscow
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
   datasource:
-    driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:6432/explore-stats
-    #driverClassName: org.h2.Driver
-    #url: jdbc:h2:file:./db/stats
-    username: explore-stats
-    password: explore-stats
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/statistics
+    username: statistics
+    password: statistics
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      user-action:
+        group-id: analyzer-consumer-user-action-group
+      event-similarity:
+        group-id: analyzer-consumer-event-similarity-group
+kafka:
+  topics:
+    event-similarity: stats.events-similarity.v1
+    user-action: stats.user-actions.v1
 
-kafka.constants:
-  url: "localhost:9092"
-  action: "stats.user-actions.v1"
-  similarity: "stats.events-similarity.v1"
+logging:
+  pattern:
+    console: "[%X{requestId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+  level:
+    root: TRACE
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    org.springframework.transaction.interceptor: TRACE
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.zalando.logbook: TRACE
+    ru.practicum: TRACE
+    sun.rmi: INFO
+    java.io.serialization: INFO
+    org.apache.tomcat.util.net.NioEndpoint: INFO

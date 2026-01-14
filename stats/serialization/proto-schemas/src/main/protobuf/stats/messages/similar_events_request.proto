@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package stats.messages;
+
+option java_package = "ru.yandex.practicum.ewm.stats.proto";
+option java_multiple_files = true;
+
+message SimilarEventsRequestProto {
+    int64 event_id = 1;
+    int64 user_id = 2;
+    int64 max_results = 3;
+}

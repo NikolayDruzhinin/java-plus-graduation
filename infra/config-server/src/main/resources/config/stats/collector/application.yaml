@@ -1,5 +1,26 @@
-kafka.constants:
-  url: "localhost:9092"
-  topic: "stats.user-actions.v1"
-grpc.server.port: 0
-#server.port: 0
+server:
+  port: 0
+grpc:
+  server:
+    port: 0
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+kafka:
+  topics:
+    user-actions: stats.user-actions.v1
+logging:
+  pattern:
+    console: "[%X{requestId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+  level:
+    root: TRACE
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    org.springframework.transaction.interceptor: TRACE
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.zalando.logbook: TRACE
+    ru.practicum: TRACE
+    sun.rmi: INFO
+    java.io.serialization: INFO
+    org.apache.tomcat.util.net.NioEndpoint: INFO

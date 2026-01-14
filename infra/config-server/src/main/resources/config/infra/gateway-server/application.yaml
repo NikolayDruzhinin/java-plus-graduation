@@ -1,46 +1,37 @@
+server:
+  port: 8080
 spring:
   cloud:
-    loadbalancer:
-      configurations: health-check
-      retry:
-        enabled: true
     gateway:
-      error:
-        include-message: never
-        include-body: never
-      actuator.verbose.enabled: false
       discovery:
         locator:
           enabled: true
       routes:
-        - id: request_service_route
-          uri: lb://REQUEST-SERVICE
+        # ===== comment-service =====
+        - id: comment-service
+          uri: lb://comment-service
+          order: 0
           predicates:
-            - Path=/users/{userId}/requests/**,/users/{userId}/events/{eventId}/requests/**
-        - id: event_service_route
-          uri: lb://EVENT-SERVICE
+            - Path=/admin/comments, /users/*/comment/**, /comment/**
+        # ===== request-service =====
+        - id: request-service
+          uri: lb://request-service
+          order: 10
           predicates:
-            - Path=/admin/events/**,/events/**,/users/{userId}/events/**,/admin/compilations/**,/compilations/**
-        - id: comment_service_route
-          uri: lb://COMMENT-SERVICE
-          predicates:
-            - Path=/admin/comments/**,/users/{userId}/comments/**
-        - id: user_service_route
-          uri: lb://USER-SERVICE
+            - Path=/users/*/requests/**, /users/*/events/*/requests/**
+        # ===== user-service (admin only) =====
+        - id: user-service
+          uri: lb://user-service
+          order: 20
           predicates:
             - Path=/admin/users/**
-        - id: category_service_route
-          uri: lb://CATEGORY-SERVICE
+        # ===== event-service: events + categories + compilations =====
+        - id: event-service
+          uri: lb://event-service
+          order: 30
           predicates:
-            - Path=/admin/categories/**,/categories/**
-
-server:
-  port: 8080
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    gateway:
-      enabled: true
+            - Path=/events/**, /users/*/events/**, /admin/events/**, /admin/categories/**, /categories/**, /admin/compilations/**, /compilations/**
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.server: DEBUG

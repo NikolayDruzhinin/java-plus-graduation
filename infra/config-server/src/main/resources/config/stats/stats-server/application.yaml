@@ -1,0 +1,42 @@
+server:
+  port: 0
+spring:
+  sql:
+    init:
+      mode: always
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Europe/Moscow
+        show_sql: true
+    properties.hibernate.type.descriptor.sql: TRACE
+  jackson:
+    time-zone: Europe/Moscow
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/statistics
+    username: statistics
+    password: statistics
+logging:
+  pattern:
+    console: "[%X{requestId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+  level:
+    root: TRACE
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    org.springframework.transaction.interceptor: TRACE
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.zalando.logbook: TRACE
+    ru.practicum: TRACE
+    sun.rmi: INFO
+    java.io.serialization: INFO
+    org.apache.tomcat.util.net.NioEndpoint: INFO

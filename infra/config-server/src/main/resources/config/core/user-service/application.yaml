@@ -1,42 +1,49 @@
 server:
   port: 0
-stats-server:
-  url: "http://stats-server"
+
 spring:
-  jpa:
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc.time_zone: UTC
-    database: POSTGRESQL
-    #database: H2
-    show-sql: true
   sql:
     init:
       mode: always
-  jackson:
-    serialization:
-      fail-on-empty-beans: false
-  main:
-    banner-mode: off
-    log-startup-info: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Europe/Moscow
+        show_sql: true
+        type.descriptor.sql.BasicBinder: TRACE
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
   datasource:
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://main-db:5432/explore-main
-    #driverClassName: org.h2.Driver
-    #url: jdbc:h2:file:./db/user
-    username: explore-main
-    password: explore-main
+    url: jdbc:postgresql://localhost:5432/userservice
+    username: userservice
+    password: userservice
+
+stats-server:
+  url: http://stats-server
+
+feign:
+  client:
+    config:
+      user-service:
+        decode404: true
+
 logging:
   level:
-    org:
-      zalando.logbook: TRACE
-      springframework:
-        orm:
-          jpa: INFO
-        transaction: INFO
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    org.springframework.transaction.interceptor: TRACE
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.zalando.logbook: TRACE
+    ru.practicum: TRACE
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
