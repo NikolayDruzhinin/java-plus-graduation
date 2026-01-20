@@ -15,8 +15,10 @@ import ru.practicum.mapper.UserMapperCustom;
 import ru.practicum.model.User;
 import ru.practicum.repository.UserRepository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +61,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> userIds) {
-        return userRepository.findAllById(userIds).stream()
+        return userRepository.findAllByIds(new HashSet<>(userIds)).stream()
                 .map(UserMapperCustom::toUserDto)
                 .toList();
     }
