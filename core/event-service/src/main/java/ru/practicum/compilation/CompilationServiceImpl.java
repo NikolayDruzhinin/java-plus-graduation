@@ -5,18 +5,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.category.CategoryService;
 import ru.practicum.client.user.UserAdminClient;
+import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
 import ru.practicum.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.Event;
 import ru.practicum.event.EventRepository;
 import ru.practicum.exception.NotFoundException;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,6 +93,22 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     private List<EventShortDto> mapToShortDtos(Collection<Event> events) {
+        List<Long> initiatorIds = events.stream()
+                .map(Event::getInitiatorId)
+                .toList();
+
+        Set<Long> categoryIds = events.stream()
+                .map(Event::getCategory)
+                .collect(Collectors.toSet());
+
+        Map<Long, UserShortDto> users = userAdminClient.getUsersShortByIds(initiatorIds)
+                .stream()
+                .collect(Collectors.toMap(UserShortDto::getId, Function.identity()));
+
+        Map<Long, CategoryDto> categories = categoryService.getByIds(categoryIds.stream().toList())
+                .stream()
+                .collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
+
         return events.stream()
                 .map(event -> EventShortDto.builder()
                         .id(event.getId()) // уже Long
@@ -102,8 +118,8 @@ public class CompilationServiceImpl implements CompilationService {
                         .paid(event.getPaid())
                         .confirmedRequests(event.getConfirmedRequests())
                         .rating(event.getRating())
-                        .initiator(userAdminClient.getUserShortById(event.getInitiatorId()))
-                        .category(categoryService.getById(event.getCategory()))
+                        .initiator(users.get(event.getInitiatorId()))
+                        .category(categories.get(event.getCategory()))
                         .build())
                 .toList();
     }

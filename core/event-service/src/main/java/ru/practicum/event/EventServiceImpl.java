@@ -7,14 +7,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.StatsClient;
 import ru.practicum.category.Category;
-import ru.practicum.category.CategoryRepository;
+import ru.practicum.category.CategoryMapperCustom;
+import ru.practicum.category.CategoryService;
 import ru.practicum.client.user.UserAdminClient;
+import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.NewEventDto;
 import ru.practicum.dto.event.UpdatedEventDto;
 import ru.practicum.dto.event.enums.State;
 import ru.practicum.dto.event.enums.StateAction;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConditionsNotMetException;
@@ -26,6 +29,7 @@ import ru.yandex.practicum.ewm.stats.proto.RecommendedEventProto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,15 +38,16 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final StatsClient statsClient;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final EventDtoMapper eventDtoMapper;
     private final UserAdminClient userAdminClient;
+    private final CategoryMapperCustom categoryMapperCustom;
 
     public EventFullDto saveEvent(NewEventDto newEventDto, long userId) {
         log.debug("Попытка сохранить новое событие: {}", newEventDto);
 
-        checkUserId(userId);
-        checkCategoryId(newEventDto.getCategory());
+        UserDto user = checkUserId(userId);
+        CategoryDto categoryDto = checkCategoryId(newEventDto.getCategory());
 
         Event event = eventDtoMapper.mapToModel(newEventDto, userId);
         event.setCreatedOn(LocalDateTime.now());
@@ -56,7 +61,7 @@ public class EventServiceImpl implements EventService {
         event.setState(State.PENDING);
         Event savedEvent = eventRepository.save(event);
         log.info("Событие сохранено с ID {}", savedEvent.getId());
-        EventFullDto dto = eventDtoMapper.mapToFullDto(savedEvent);
+        EventFullDto dto = eventDtoMapper.mapToFullDto(savedEvent, user, categoryDto);
         log.debug("Сформированный EventFullDto: {}", dto);
         return dto;
     }
@@ -65,9 +70,9 @@ public class EventServiceImpl implements EventService {
                                     long userId, long eventId) {
         log.info("Попытка обновить событие. userId={}, eventId={}", userId, eventId);
 
-        checkUserId(userId);
-
-       Event event = checkAndGetEventById(eventId);
+        UserDto userDto = checkUserId(userId);
+        Event event = checkAndGetEventById(eventId);
+        CategoryDto categoryDto = categoryService.getById(event.getCategory());
 
         if (!event.getState().equals(State.CANCELED) && !event.getState().equals(State.PENDING)) {
             log.warn("Событие нельзя изменить. Состояние: {}, Модерация: {}",
@@ -88,7 +93,7 @@ public class EventServiceImpl implements EventService {
         Event savedUpdatedEvent = eventRepository.save(event);
         log.info("Событие успешно обновлено. id={}", savedUpdatedEvent.getId());
 
-        return eventDtoMapper.mapToFullDto(savedUpdatedEvent);
+        return eventDtoMapper.mapToFullDto(savedUpdatedEvent, userDto, categoryDto);
     }
 
     public EventFullDto updateAdminEvent(UpdatedEventDto updatedEvent,
@@ -103,8 +108,7 @@ public class EventServiceImpl implements EventService {
                     "Нельзя изменить событие, которое начинается в течение часа");
         }
 
-
-        if(event.getState().equals(State.PUBLISHED))
+        if (event.getState().equals(State.PUBLISHED))
             throw new ConflictPropertyConstraintException("Нельзя менять статус у уже опубликованного события");
         if (event.getState().equals(State.CANCELED))
             throw new ConflictPropertyConstraintException("Нельзя менять статус у уже отмененного события");
@@ -121,8 +125,9 @@ public class EventServiceImpl implements EventService {
         applyUpdate(event, updatedEvent);
         Event savedUpdatedEvent = eventRepository.save(event);
         log.info("Событие успешно обновлено админом. id={}", savedUpdatedEvent.getId());
-
-        return eventDtoMapper.mapToFullDto(savedUpdatedEvent);
+        UserDto user = userAdminClient.getUserById(savedUpdatedEvent.getInitiatorId());
+        CategoryDto categoryDto = categoryService.getById(savedUpdatedEvent.getCategory());
+        return eventDtoMapper.mapToFullDto(savedUpdatedEvent, user, categoryDto);
     }
 
 
@@ -170,10 +175,25 @@ public class EventServiceImpl implements EventService {
                 .stream()
                 .toList();
 
+        List<Long> userIds = events.stream()
+                .map(Event::getInitiatorId)
+                .toList();
+
+        List<Long> categoryIds = events.stream()
+                .map(Event::getCategory)
+                .toList();
+
+        Map<Long, UserDto> users = userAdminClient.getUsersByIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(UserDto::getId, Function.identity()));
+        Map<Long, CategoryDto> c = categoryService.getByIds(categoryIds).stream()
+                .collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
+
         List<EventFullDto> eventsDto = eventRepository.getEvents(text, categories, paid,
                         start, end, onlyAvailable, isAdmin, page)
                 .stream()
-                .map(eventDtoMapper::mapToFullDto)
+                .map(e -> eventDtoMapper.mapToFullDto(e, users.get(e.getInitiatorId()),
+                        c.get(Math.toIntExact(e.getCategory()))))
                 .toList();
 
         log.info("Получено {} событий после фильтрации", events.size());
@@ -201,7 +221,8 @@ public class EventServiceImpl implements EventService {
         log.debug("Получен запрос на получение событий пользователя с id={} (from={}, size={})", userId, from, size);
 
         log.debug("Проверка существования пользователя с id={}", userId);
-        if (userAdminClient.getUserById(userId) == null) {
+        UserDto userDto = userAdminClient.getUserById(userId);
+        if (userDto == null) {
             log.warn("Пользователь с id={} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
@@ -216,6 +237,12 @@ public class EventServiceImpl implements EventService {
         log.debug("Найдено {} событий", userEvents.size());
 
         Map<Long, Double> eventRating = getEventRating(userEvents);
+        List<Long> categoryIds = userEvents.stream()
+                .map(Event::getCategory)
+                .toList();
+
+        Map<Long, CategoryDto> c = categoryService.getByIds(categoryIds).stream()
+                .collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
 
         return userEvents.stream()
                 .map(e -> {
@@ -223,15 +250,15 @@ public class EventServiceImpl implements EventService {
                     e.setRating(rating);
                     return e;
                 })
-                .map(eventDtoMapper::mapToShortDto)
+                .map(e -> eventDtoMapper.mapToShortDto(e, userDto, c.get(e.getCategory())))
                 .toList();
     }
 
     public EventFullDto getEventByUserIdAndEventId(long userId, long eventId) {
         log.debug("Получен запрос на получение события с id={} пользователя с id={}",
                 eventId, userId);
-
-        if (userAdminClient.getUserById(userId) == null) {
+        UserDto u = userAdminClient.getUserById(userId);
+        if (u == null) {
             log.warn("Пользователь с id={} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
@@ -243,7 +270,8 @@ public class EventServiceImpl implements EventService {
         }
 
         log.debug("Событие с id={} найдено для пользователя с id={}", eventId, userId);
-        return eventDtoMapper.mapToFullDto(eventOpt.get());
+        CategoryDto cat = categoryService.getById(eventOpt.get().getCategory());
+        return eventDtoMapper.mapToFullDto(eventOpt.get(), u, cat);
     }
 
 
@@ -263,7 +291,9 @@ public class EventServiceImpl implements EventService {
         }
 
         log.debug("Событие с id={} найдено", eventId);
-        EventFullDto dto = eventDtoMapper.mapToFullDto(event);
+        UserDto u = userAdminClient.getUserById(userId);
+        CategoryDto c = categoryService.getById(event.getCategory());
+        EventFullDto dto = eventDtoMapper.mapToFullDto(event, u, c);
         Map<Long, Double> eventRating = getEventRating(List.of(event));
         double rating = eventRating.getOrDefault(event.getId(), 0.0);
         dto.setRating(rating);
@@ -280,25 +310,27 @@ public class EventServiceImpl implements EventService {
     }
 
     public List<EventShortDto> getRecommendations(long userId) {
-        checkUserId(userId);
+        UserDto u = checkUserId(userId);
         UserShortDto userShortDto = userAdminClient.getUserShortById(userId);
         log.debug("Спрашиваем statsClient о рекомендациях для пользователя");
-        Map<Long, Double> eventRating  = statsClient.getRecommendationsForUser(userId, 10)
+        Map<Long, Double> eventRating = statsClient.getRecommendationsForUser(userId, 10)
                 .collect(
                         Collectors.toMap(RecommendedEventProto::getEventId, RecommendedEventProto::getScore)
                 );
         log.debug("Получили рекомендации для пользователя");
-        List<Event> events =  eventRepository.findByIdIn(eventRating.keySet()).stream()
+        List<Event> events = eventRepository.findByIdIn(eventRating.keySet()).stream()
                 .map(event -> {
                     double rating = eventRating.getOrDefault(event.getId(), 0.0);
                     event.setRating(rating);
                     return event;
                 })
                 .toList();
-        Map<Long, Category> eventCategory = getCategoryMap(events);
+        Map<Long, CategoryDto> eventCategory = categoryService.getByIds(events
+                        .stream().map(Event::getCategory).toList())
+                .stream().collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
 
         return events.stream()
-                .map(eventDtoMapper::mapToShortDto)
+                .map(e -> eventDtoMapper.mapToShortDto(e, u, eventCategory.get(e.getCategory())))
                 .toList();
     }
 
@@ -318,7 +350,9 @@ public class EventServiceImpl implements EventService {
         applyUpdateFromFull(foundEvent, event);
         Event saved = eventRepository.saveAndFlush(foundEvent);
         log.debug("Количество запросов после обновления: " + saved.getConfirmedRequests());
-        return eventDtoMapper.mapToFullDto(saved);
+        UserDto u = userAdminClient.getUserById(saved.getInitiatorId());
+        CategoryDto c = categoryService.getById(event.getCategory().getId());
+        return eventDtoMapper.mapToFullDto(saved, u, c);
     }
 
     public void likeEvent(Long eventId, Long userId) {
@@ -431,8 +465,7 @@ public class EventServiceImpl implements EventService {
             event.setTitle(dto.getTitle());
         }
         if (dto.getCategory() > 0) {
-            categoryRepository.findById(dto.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+            categoryService.getById(dto.getCategory());
             event.setCategory(dto.getCategory());
         }
         if (dto.getStateAction() != null) {
@@ -447,34 +480,20 @@ public class EventServiceImpl implements EventService {
         log.info("Событие обновлено");
     }
 
-    private void checkUserId(long userId) {
+    private UserDto checkUserId(long userId) {
         log.debug("Отправляем в userClient вопрос о существовании пользователя с userId " + userId);
-        if (userAdminClient.getUserById(userId) == null) {
+        UserDto userDto = userAdminClient.getUserById(userId);
+        if (userDto == null) {
             log.warn("Пользователь с id {} не найден", userId);
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
+        return userDto;
     }
 
-    private void checkCategoryId(long catId) {
+    private CategoryDto checkCategoryId(long catId) {
         log.debug("Отправляем в userClient вопрос о существовании категории с catId " + catId);
-        if (categoryRepository.findById(catId).isEmpty()) {
-            log.warn("Категория с id {} не найдена", catId);
-            throw new NotFoundException("Категория с id " + catId + " не найдена");
-        }
-    }
-
-    private Map<Long, Category> getCategoryMap(List<Event> userEvents) {
-        Map<Long, Category> eventCategory = new HashMap<>();
-        log.debug("Ищем категории");
-        List<Long> categoryIds = userEvents.stream().map(Event::getCategory).toList();
-
-        Map<Long, Category> categories = categoryRepository.findByIdIn(categoryIds).stream()
-                .collect(Collectors.toMap(Category::getId, categoryRepo -> categoryRepo));
-        for (Event event : userEvents) {
-            eventCategory.put(event.getId(), categories.get(event.getCategory()));
-        }
-        log.debug("Нашли категории");
-        return eventCategory;
+        CategoryDto categoryDto = categoryService.getById(catId);
+        return categoryDto;
     }
 
     private Event checkAndGetEventById(long eventId) {

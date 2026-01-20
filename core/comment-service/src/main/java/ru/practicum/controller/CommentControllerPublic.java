@@ -1,6 +1,7 @@
 package ru.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.service.CommentService;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class CommentControllerPublic {
 
     private final CommentService commentService;
@@ -29,7 +31,7 @@ public class CommentControllerPublic {
     @GetMapping("/comment/{commentId}")
     @ResponseStatus(HttpStatus.OK)
     public CommentDto getCommentByID(@PathVariable Long commentId) {
-
+        log.debug("Get comment by id={} request", commentId);
         return commentService.getCommentById(commentId);
     }
 }

@@ -12,14 +12,12 @@ import ru.practicum.exception.NotFoundException;
 
 import java.util.List;
 
-import static ru.practicum.category.CategoryMapperCustom.toDto;
-import static ru.practicum.category.CategoryMapperCustom.toEntity;
-
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repository;
     private final EventRepository eventRepository;
+    private final CategoryMapperCustom mapper;
 
     @Override
     public CategoryDto create(NewCategoryDto dto) {
@@ -27,8 +25,8 @@ public class CategoryServiceImpl implements CategoryService {
         if (repository.existsByName(categoryName)) {
             throw new ConflictPropertyConstraintException("Category with name " + categoryName + " already exists");
         }
-        Category category = toEntity(dto);
-        return toDto(repository.save(category));
+        Category category = mapper.toEntity(dto);
+        return mapper.toDto(repository.save(category));
     }
 
     @Override
@@ -41,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         category.setName(dto.getName());
-        return toDto(repository.save(category));
+        return mapper.toDto(repository.save(category));
     }
 
     @Override
@@ -57,17 +55,24 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDto> getAll(int from, int size) {
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
         return repository.findAll(page)
-                .map(CategoryMapperCustom::toDto)
+                .map(mapper::toDto)
                 .getContent();
     }
 
     @Override
     public CategoryDto getById(Long catId) {
         Category category = checkAndGetCategoryById(catId);
-        return toDto(category);
+        return mapper.toDto(category);
     }
 
-    private Category  checkAndGetCategoryById(long catId) {
+    @Override
+    public List<CategoryDto> getByIds(List<Long> ids) {
+        return repository.findByIdIn(ids).stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
+    private Category checkAndGetCategoryById(long catId) {
         return repository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Category with id = " + catId + " not found"));
     }

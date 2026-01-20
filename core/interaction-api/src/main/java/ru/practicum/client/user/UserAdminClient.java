@@ -28,4 +28,10 @@ public interface UserAdminClient {
 
     @GetMapping("/short")
     UserShortDto getUserShortById(@RequestParam("userId") Long userId);
+
+    @GetMapping("/short")
+    List<UserShortDto> getUsersShortByIds(@RequestParam("initiatorIds") List<Long> initiatorIds);
+
+    @GetMapping
+    List<UserDto> getUsersByIds(@RequestParam("userIds") List<Long> userIds);
 }

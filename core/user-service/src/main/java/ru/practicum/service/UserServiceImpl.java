@@ -14,9 +14,9 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.UserMapperCustom;
 import ru.practicum.model.User;
 import ru.practicum.repository.UserRepository;
-import ru.practicum.service.UserService;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +48,20 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserById(Long id) {
         checkUserId(id);
         return UserMapperCustom.toUserDto(userRepository.findById(id).get());
+    }
+
+    @Override
+    public List<UserShortDto> getUsersShortById(Set<Long> initiatorIds) {
+        return userRepository.findAllByIds(initiatorIds)
+                .map(UserMapperCustom::toUserShortDto)
+                .toList();
+    }
+
+    @Override
+    public List<UserDto> getUsers(List<Long> userIds) {
+        return userRepository.findAllById(userIds).stream()
+                .map(UserMapperCustom::toUserDto)
+                .toList();
     }
 
     public void deleteUserById(Long id) {

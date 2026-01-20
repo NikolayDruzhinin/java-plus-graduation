@@ -1,9 +1,11 @@
 package ru.practicum.client;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import ru.practicum.client.category.AdminCategoryClient;
 import ru.practicum.client.category.PublicCategoryClient;
 import ru.practicum.client.comment.CommentAdminClient;
@@ -35,6 +37,7 @@ import ru.practicum.dto.user.UserDto;
 import ru.practicum.dto.user.UserShortDto;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class MyFeignClientFallback implements UserAdminClient, RequestClient, EventClient,
@@ -70,7 +73,20 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
         throw new RuntimeException("Сервис user-service временно недоступен (getUserShortById)");
     }
 
+    @Override
+    public List<UserShortDto> getUsersShortByIds(List<Long> initiatorIds) {
+        return List.of();
+    }
 
+    @Override
+    public List<UserDto> getUsersByIds(List<Long> userIds) {
+        return List.of();
+    }
+
+    @PostMapping("/admin/users/short")
+    public List<UserShortDto> getUsersShortByIds(@RequestParam Set<Long> initiatorIds) {
+        throw new RuntimeException("Сервис user-service временно недоступен (getUsersShortByIds)");
+    }
 
     // === RequestClient ===
     @Override
@@ -98,7 +114,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     public List<ParticipationRequestDto> getRequestByInitiator(Long userId, Long eventId) {
         throw new RuntimeException("Сервис request-service временно недоступен (getRequestByInitiator)");
     }
-
 
 
     // === EventClient ===
@@ -155,7 +170,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     }
 
 
-
     // === CompilationClient ===
     @Override
     public List<CompilationDto> getAll(Boolean pinned, int from, int size) {
@@ -166,7 +180,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     public CompilationDto getCompilationById(Long compId) {
         throw new RuntimeException("Сервис event-service временно недоступен (getById)");
     }
-
 
 
     // === AdminCompilationClient ===
@@ -186,7 +199,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     }
 
 
-
     // === AdminCategoryClient ===
     @Override
     public CategoryDto create(NewCategoryDto dto) {
@@ -204,7 +216,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     }
 
 
-
     // === PublicCategoryClient ===
     @Override
     public List<CategoryDto> getAll(int from, int size) {
@@ -217,13 +228,11 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     }
 
 
-
     // === CommentAdminClient ===
     @Override
     public void deleteCommentsByAdmin(DeleteCommentsDto deleteCommentsDto) {
         throw new RuntimeException("Сервис comment-service временно недоступен (deleteCommentsByAdmin)");
     }
-
 
 
     // === CommentPrivateClient ===
@@ -246,7 +255,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
     public List<CommentDto> getCommentsByUserId(Long userId) {
         throw new RuntimeException("Сервис comment-service временно недоступен (getCommentsByUserId)");
     }
-
 
 
     // === CommentPublicClient ===

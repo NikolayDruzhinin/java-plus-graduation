@@ -1,11 +1,11 @@
 package ru.practicum.service;
 
-import org.springframework.web.bind.annotation.RequestParam;
 import ru.practicum.dto.user.UserCreateDto;
 import ru.practicum.dto.user.UserDto;
 import ru.practicum.dto.user.UserShortDto;
 
 import java.util.List;
+import java.util.Set;
 
 public interface UserService {
 
@@ -18,4 +18,8 @@ public interface UserService {
     UserShortDto getUserShortById(Long id);
 
     UserDto getUserById(Long id);
+
+    List<UserShortDto> getUsersShortById(Set<Long> initiatorIds);
+
+    List<UserDto> getUsers(List<Long> userIds);
 }

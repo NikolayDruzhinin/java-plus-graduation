@@ -12,6 +12,7 @@ import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.service.UserServiceImpl;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -41,6 +42,15 @@ public class UserAdminController {
         return result;
     }
 
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    List<UserDto> getUsersByIds(@RequestParam("userIds") List<Long> userIds) {
+        log.info("GET /admin/users - получение списка пользователей, ids={}", userIds);
+        List<UserDto> result = userService.getUsers(userIds);
+        log.info("Найдено {} пользователей", result.size());
+        return result;
+    }
+
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUserById(@PathVariable Long userId) {
@@ -65,5 +75,12 @@ public class UserAdminController {
         UserShortDto result = userService.getUserShortById(userId);
         log.info("Краткая информация получена: {}", result);
         return result;
+    }
+
+    @GetMapping("/short")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserShortDto> getUserShortByIds(@RequestParam("initiatorIds") Set<Long> initiatorIds) {
+        log.info("GET /admin/users/short?id - получение краткой информации о пользователях");
+        return userService.getUsersShortById(initiatorIds);
     }
 }

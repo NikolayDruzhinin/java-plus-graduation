@@ -2,23 +2,17 @@ package ru.practicum.event;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.practicum.category.CategoryService;
-import ru.practicum.client.user.UserAdminClient;
+import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.Location;
 import ru.practicum.dto.event.NewEventDto;
 import ru.practicum.dto.user.UserDto;
 import ru.practicum.dto.user.UserShortDto;
-import ru.practicum.exception.NotFoundException;
 
 @Component
 @RequiredArgsConstructor
 public class EventDtoMapper {
-
-    private final CategoryService categoryService;
-    private final UserAdminClient userAdminClient;
-
     public Event mapToModel(NewEventDto dto, long userId) {
         return Event.builder()
                 .initiatorId(userId)
@@ -35,15 +29,10 @@ public class EventDtoMapper {
                 .build();
     }
 
-    public EventShortDto mapToShortDto(Event event) {
-        UserDto initiator = userAdminClient.getUserById(event.getInitiatorId());
-        if (initiator == null) {
-            throw new NotFoundException("User with " + event.getInitiatorId() + "not found");
-        }
-
+    public EventShortDto mapToShortDto(Event event, UserDto initiator, CategoryDto categoryDto) {
         return EventShortDto.builder()
                 .annotation(event.getAnnotation())
-                .category(categoryService.getById(event.getCategory()))
+                .category(categoryDto)
                 .confirmedRequests((int) event.getConfirmedRequests())
                 .eventDate(event.getEventDate())
                 .id((int) event.getId())
@@ -54,16 +43,11 @@ public class EventDtoMapper {
                 .build();
     }
 
-    public EventFullDto mapToFullDto(Event event) {
-        UserDto initiator = userAdminClient.getUserById(event.getInitiatorId());
-        if (initiator == null) {
-            throw new NotFoundException("User with " + event.getInitiatorId() + "not found");
-        }
-
+    public EventFullDto mapToFullDto(Event event, UserDto initiator, CategoryDto categoryDto) {
         return EventFullDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
-                .category(categoryService.getById(event.getCategory()))
+                .category(categoryDto)
                 .confirmedRequests((int) event.getConfirmedRequests())
                 .createdOn(event.getCreatedOn())
                 .description(event.getDescription())
