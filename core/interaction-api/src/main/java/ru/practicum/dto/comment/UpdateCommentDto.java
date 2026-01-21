@@ -1,15 +1,16 @@
 package ru.practicum.dto.comment;
 
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.Data;
-import ru.practicum.validation.UpdateGroup;
-
+import lombok.experimental.FieldDefaults;
 
 @Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateCommentDto {
-
-    @NotBlank(groups = UpdateGroup.class)
-    @Size(min = 2, max = 1000, message = "Комментарий должен содержать от 2 до 1000 символов", groups = UpdateGroup.class)
-    private String text;
+    @NotBlank
+    @Size(min = 3, max = 3000)
+    String content;
 }

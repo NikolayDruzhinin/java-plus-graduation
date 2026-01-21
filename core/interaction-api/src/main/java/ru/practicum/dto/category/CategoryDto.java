@@ -1,20 +1,15 @@
 package ru.practicum.dto.category;
 
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import ru.practicum.validation.UpdateGroup;
-
-
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CategoryDto {
-    private Long id;
-    @NotBlank(groups = UpdateGroup.class)
-    @Size(min = 1, max = 50, message = "Длина названия должна быть >= 1 символа и <= 50", groups = UpdateGroup.class)
-    private String name;
+    Long id;
+    String name;
 }

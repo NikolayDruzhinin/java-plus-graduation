@@ -1,21 +1,37 @@
 server:
-    port: 8080
-
+  port: 8080
 spring:
-    cloud:
-        gateway:
-            discovery.locator.enabled: true
-            routes:
-                -   id: user_service
-                    uri: lb://user-service
-                    predicates:
-                        - Path=/admin/users/**
-                -   id: request_service_route
-                    uri: lb://request-service
-                    predicates:
-                        - Path=/users/*/requests/**
-                -   id: event-service
-                    uri: lb://event-service
-                    predicates:
-                        - Path=/admin/events/**, /users/*/events/**, /users/*/events/*/requests/**, /events/**, /categories/**, /admin/categories/**, /admin/compilations/**, /compilations/**, /users/*/events/*/comments/**, /events/*/comments/**
-
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        # ===== comment-service =====
+        - id: comment-service
+          uri: lb://comment-service
+          order: 0
+          predicates:
+            - Path=/admin/comments, /users/*/comment/**, /comment/**
+        # ===== request-service =====
+        - id: request-service
+          uri: lb://request-service
+          order: 10
+          predicates:
+            - Path=/users/*/requests/**, /users/*/events/*/requests/**
+        # ===== user-service (admin only) =====
+        - id: user-service
+          uri: lb://user-service
+          order: 20
+          predicates:
+            - Path=/admin/users/**
+        # ===== event-service: events + categories + compilations =====
+        - id: event-service
+          uri: lb://event-service
+          order: 30
+          predicates:
+            - Path=/events/**, /users/*/events/**, /admin/events/**, /admin/categories/**, /categories/**, /admin/compilations/**, /compilations/**
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.server: DEBUG

@@ -1,16 +1,17 @@
 package ru.practicum.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
 import lombok.Data;
+import ru.practicum.dto.request.enums.Status;
 
 import java.time.LocalDateTime;
 
+@Builder
 @Data
 public class ParticipationRequestDto {
-    private Long id;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime created;
-    private Long event;
-    private Long requester;
-    private String status; // "PENDING"/"CONFIRMED"/"REJECTED"/"CANCELED"
+    LocalDateTime created;
+    Long event;
+    Long id;
+    Long requester;
+    Status status;
 }

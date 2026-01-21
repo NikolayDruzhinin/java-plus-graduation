@@ -2,20 +2,24 @@ package ru.practicum.dto.compilation;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import ru.practicum.validation.CreateGroup;
-
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.util.Set;
 
-@Data
+@Builder
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewCompilationDto {
 
-    @NotBlank(groups = CreateGroup.class)
-    @Size(min = 1, max = 50, message = "Длина названия должна быть >= 1 символа и <= 50", groups = CreateGroup.class)
-    private String title;
+    Set<Long> events;
 
-    private Boolean pinned = false;
+    Boolean pinned;
 
-    private Set<Long> events;
+    @NotBlank
+    @Size(max = 50)
+    String title;
 }

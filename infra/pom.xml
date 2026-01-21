@@ -10,7 +10,9 @@
     </parent>
 
     <artifactId>infra</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <modules>
         <module>config-server</module>
         <module>discovery-server</module>

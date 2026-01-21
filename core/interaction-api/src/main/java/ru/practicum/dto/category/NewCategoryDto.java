@@ -2,14 +2,16 @@ package ru.practicum.dto.category;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import ru.practicum.validation.CreateGroup;
+import lombok.*;
 
-
-@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class NewCategoryDto {
 
-    @NotBlank(groups = CreateGroup.class)
-    @Size(min = 1, max = 50, message = "Длина названия должна быть >= 1 символа и <= 50", groups = CreateGroup.class)
+    @NotBlank
+    @Size(min = 1, max = 50, message = "Category name must be 1 to 50 characters")
     private String name;
 }

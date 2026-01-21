@@ -1,35 +1,25 @@
 package ru.practicum.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import ru.practicum.request.model.ParticipationRequest;
-
+import ru.practicum.dto.request.enums.Status;
+import ru.practicum.model.Request;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface RequestRepository extends JpaRepository<ParticipationRequest, Long> {
+public interface RequestRepository extends JpaRepository<Request, Long> {
 
-    // Все заявки конкретного пользователя
-    List<ParticipationRequest> findAllByRequesterId(Long requesterId);
+    List<Request> findByRequesterId(Long requesterId);
 
-    // Все заявки на конкретное событие
-    List<ParticipationRequest> findAllByEventId(Long eventId);
+    Optional<Request> findByRequesterIdAndEventId(Long requesterId, Long eventId);
 
-    // Метод для получения количества заявок с определенным eventId и статусом CONFIRMED
+    List<Request> findByEventId(Long eventId);
 
-    @Query("""
-            SELECT COUNT(pr)
-            FROM ParticipationRequest pr
-            WHERE pr.eventId = :eventId AND pr.status = 'CONFIRMED'
-            """)
-    Long countConfirmedRequestsByEventId(@Param("eventId") Long eventId);
+    List<Request> findAllByIdIn(List<Long> requestIds);
 
-    boolean existsByRequesterIdAndEventId(Long requesterId, Long eventId);
+    List<Request> findByEventIdAndStatus(Long eventId, Status status);
 
-    Optional<ParticipationRequest> findByIdAndRequesterId(Long requestId, Long requesterId);
 
-    @Query("SELECT e.views FROM Event e WHERE e.id = :eventId")
-    Long getViewsForEvent(@Param("eventId") Long eventId);
+
+
 }
