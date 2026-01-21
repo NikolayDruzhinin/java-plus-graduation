@@ -73,16 +73,6 @@ public class MyFeignClientFallback implements UserAdminClient, RequestClient, Ev
         throw new RuntimeException("Сервис user-service временно недоступен (getUserShortById)");
     }
 
-    @Override
-    public List<UserShortDto> getUsersShortByIds(List<Long> initiatorIds) {
-        return List.of();
-    }
-
-    @Override
-    public List<UserDto> getUsersByIds(List<Long> userIds) {
-        return List.of();
-    }
-
     @PostMapping("/admin/users/short")
     public List<UserShortDto> getUsersShortByIds(@RequestParam Set<Long> initiatorIds) {
         throw new RuntimeException("Сервис user-service временно недоступен (getUsersShortByIds)");

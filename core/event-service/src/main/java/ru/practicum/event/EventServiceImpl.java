@@ -183,7 +183,7 @@ public class EventServiceImpl implements EventService {
                 .map(Event::getCategory)
                 .toList();
 
-        Map<Long, UserDto> users = userAdminClient.getUsersByIds(userIds)
+        Map<Long, UserDto> users = userAdminClient.getUsers(userIds, 0, 10)
                 .stream()
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
         Map<Long, CategoryDto> c = categoryService.getByIds(categoryIds).stream()

@@ -54,19 +54,6 @@ public class UserServiceImpl implements UserService {
         return UserMapperCustom.toUserDto(userRepository.findById(id).get());
     }
 
-    @Override
-    public List<UserShortDto> getUsersShortById(List<Long> initiatorIds) {
-        return getUsers(initiatorIds, 0, 10)
-                .stream()
-                .map(u -> new UserShortDto(u.getId(), u.getName()))
-                .toList();
-    }
-
-    @Override
-    public List<UserDto> getUsers(List<Long> initiatorIds) {
-        return getUsers(initiatorIds, 0, 10);
-    }
-
     public void deleteUserById(Long id) {
         checkUserId(id);
         userRepository.deleteById(id);
