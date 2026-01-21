@@ -36,13 +36,15 @@ public class UserServiceImpl implements UserService {
 
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         final Pageable pageable = PageRequest.of(0, size + from, Sort.by("id").ascending());
-        Page<User> users;
+        List<User> users;
         if (ids == null || ids.isEmpty()) {
-            users = userRepository.findAll(pageable);
+            users = userRepository.findAll(pageable).getContent();
         } else {
-            users = userRepository.findAllByIdIn(ids, PageRequest.of(from > 0 ? from / size : 0, size)); /// нужна ли сортировка?
+            users = userRepository.findAllByIdIn(ids, pageable).getContent(); /// нужна ли сортировка?
         }
-        return users.getContent().stream()
+        return users.stream()
+                .skip(from)
+                .limit(size)
                 .map(UserMapperCustom::toUserDto)
                 .toList();
     }
@@ -54,16 +56,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserShortDto> getUsersShortById(List<Long> initiatorIds) {
-        return userRepository.findAllByIds(initiatorIds)
-                .map(UserMapperCustom::toUserShortDto)
+        return getUsers(initiatorIds, 0, 10)
+                .stream()
+                .map(u -> new UserShortDto(u.getId(), u.getName()))
                 .toList();
     }
 
     @Override
-    public List<UserDto> getUsers(List<Long> userIds) {
-        return userRepository.findAllByIds(userIds)
-                .map(UserMapperCustom::toUserDto)
-                .toList();
+    public List<UserDto> getUsers(List<Long> initiatorIds) {
+        return getUsers(initiatorIds, 0, 10);
     }
 
     public void deleteUserById(Long id) {
