@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserShortDto> getUsersShortById(Set<Long> initiatorIds) {
+    public List<UserShortDto> getUsersShortById(List<Long> initiatorIds) {
         return userRepository.findAllByIds(initiatorIds)
                 .map(UserMapperCustom::toUserShortDto)
                 .toList();
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> userIds) {
-        return userRepository.findAllByIds(new HashSet<>(userIds)).stream()
+        return userRepository.findAllByIds(userIds)
                 .map(UserMapperCustom::toUserDto)
                 .toList();
     }

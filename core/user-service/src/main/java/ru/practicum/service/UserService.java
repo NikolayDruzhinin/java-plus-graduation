@@ -19,7 +19,7 @@ public interface UserService {
 
     UserDto getUserById(Long id);
 
-    List<UserShortDto> getUsersShortById(Set<Long> initiatorIds);
+    List<UserShortDto> getUsersShortById(List<Long> initiatorIds);
 
     List<UserDto> getUsers(List<Long> userIds);
 }

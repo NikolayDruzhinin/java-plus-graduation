@@ -79,7 +79,7 @@ public class UserAdminController {
 
     @GetMapping("/short")
     @ResponseStatus(HttpStatus.OK)
-    public List<UserShortDto> getUserShortByIds(@RequestParam("initiatorIds") Set<Long> initiatorIds) {
+    public List<UserShortDto> getUserShortByIds(@RequestParam("initiatorIds") List<Long> initiatorIds) {
         log.info("GET /admin/users/short?id - получение краткой информации о пользователях");
         return userService.getUsersShortById(initiatorIds);
     }
